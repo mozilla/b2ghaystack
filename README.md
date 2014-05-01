@@ -18,11 +18,11 @@ reach with at least one job configured with the following parameters:
 
 With pip and git installed you can use:
 
-    pip install git+git://github.com/davehunt/b2ghaystack.git#egg=b2ghaystack
+    pip install git+git://github.com/mozilla/b2ghaystack.git#egg=b2ghaystack
 
 If you anticipate modifying b2ghaystack, you can instead:
 
-    git clone git://github.com/davehunt/b2ghaystack.git
+    git clone git://github.com/mozilla/b2ghaystack.git
     cd b2ghaystack
     python setup.py develop
 
