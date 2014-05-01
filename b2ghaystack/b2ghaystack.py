@@ -27,7 +27,14 @@ def url_links(url, regex=None, auth=None):
 def get_builds(branch, device, good_rev, bad_rev, eng=False, max_builds=10.,
                auth=None):
     revisions = []
-    path = '' if branch == 'mozilla-central' else 'integration/'
+
+    path = ''
+    for p in ['integration', 'releases']:
+        r = requests.get('https://hg.mozilla.org/%s/%s' % (p, branch))
+        if r.status_code == 200:
+            path = p + '/'
+            break
+
     pushlog_url = 'https://hg.mozilla.org/%s%s/json-pushes?fromchange=%s' \
         '&tochange=%s' % (path, branch, good_rev, bad_rev)
     print 'Getting revisions from: %s' % pushlog_url
