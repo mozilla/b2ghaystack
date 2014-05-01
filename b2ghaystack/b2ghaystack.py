@@ -194,6 +194,8 @@ def cli(args=sys.argv[1:]):
                 'BUILD_LOCATION': build['url']})
             print 'Triggering %s for revision: %s (%s)' % (
                 args.job_name, build['revision'][:12], build['timestamp'])
+            if args.verbose:
+                print 'Using parameters: %s' % parameters
             if not args.dry_run:
                 j.build_job(args.job_name, parameters)
                 time.sleep(0.5)
