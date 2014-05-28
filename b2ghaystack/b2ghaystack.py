@@ -11,6 +11,24 @@ import sys
 from bs4 import BeautifulSoup
 import jenkins
 import requests
+from concurrent import futures
+
+
+def get_valid_builds(build_url, raw_revisions, ts, auth=None):
+    all_builds = []
+    for link in url_links(build_url, '^sources\.xml$', auth):
+        sources_url = '%s/%s' % (build_url, link)
+        r = requests.get(sources_url, auth=auth)
+        search = re.search('<project .* path="gecko" remote="hgmozillaorg"'
+                           ' revision="(\w{12})"/>', r.text)
+        if search:
+            for revision in raw_revisions:
+                if search.group(1) == revision[:12]:
+                    all_builds.append({
+                        'revision': revision,
+                        'timestamp': ts,
+                        'url': build_url})
+    return all_builds
 
 
 def url_links(url, regex=None, auth=None):
@@ -70,21 +88,25 @@ def get_builds(branch, device, good_rev, bad_rev, eng=False, max_builds=10.,
                          t < (end_time + range), ts)
     print '--------> %d builds within range' % len(ts_in_range)
     all_builds = []
-    for ts in ts_in_range:
-        build_url = '%s%s/' % (
-            base_url, time.strftime(format, time.localtime(ts)))
-        for link in url_links(build_url, '^sources\.xml$', auth):
-            sources_url = '%s/%s' % (build_url, link)
-            r = requests.get(sources_url, auth=auth)
-            search = re.search('<project .* path="gecko" remote="hgmozillaorg"'
-                               ' revision="(\w{12})"/>', r.text)
-            if search:
-                for revision in raw_revisions:
-                    if search.group(1) == revision[:12]:
-                        all_builds.append({
-                            'revision': revision,
-                            'timestamp': ts,
-                            'url': build_url})
+
+    with futures.ThreadPoolExecutor(max_workers=100) as executor:
+        futures_results = {}
+        for ts in ts_in_range:
+            build_url = '%s%s/' % (
+                base_url, time.strftime(format, time.localtime(ts)))
+            future = executor.submit(get_valid_builds,
+                                     build_url,
+                                     raw_revisions,
+                                     ts,
+                                     auth=auth)
+            futures_results[future] = build_url
+        for future in futures.as_completed(futures_results):
+            if future.exception() is not None:
+                sys.exit("Retrieving valid builds from %r generated an"
+                         " exception: %s" % (futures_results[future],
+                                             future.exception()))
+            all_builds.extend(future.result())
+
     print '--------> %d builds matching revisions' % len(all_builds)
     if len(all_builds) > max_builds:
         builds = []

@@ -31,4 +31,5 @@ setup(name='b2ghaystack',
       install_requires=[
           'beautifulsoup4==4.3.2',
           'python-jenkins==0.2.1',
-          'requests==2.2.1'])
+          'requests==2.2.1',
+          'futures==2.1.6'])
