@@ -78,7 +78,10 @@ def get_builds(branch, device, good_rev, bad_rev, eng=False, max_builds=10.,
                'tinderbox-builds/%s-%s%s/' % (
                    branch, device, '-eng' if eng else '')
 
-    range = 60 * 60 * 4  # anything within four hours
+    # anything within twelve hours is potentially within the range
+    # this should be a tighter range, but the builds have wrong timestamps
+    # see https://bugzilla.mozilla.org/show_bug.cgi?id=1042750
+    range = 60 * 60 * 12
     format = '%Y%m%d%H%M%S'
     print 'Getting builds from: %s' % base_url
     ts = map(lambda l: int(time.mktime(time.strptime(l.strip('/'), format))),
